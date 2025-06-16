@@ -1,0 +1,8 @@
+{
+    "functions": {
+      "shopify_oauth_callback": {
+        "verify_jwt": false
+      }
+    }
+  }
+  
