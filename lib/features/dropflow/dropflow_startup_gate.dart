@@ -11,12 +11,11 @@ class DropFlowStartupGate extends StatefulWidget {
 }
 
 class _DropFlowStartupGateState extends State<DropFlowStartupGate> {
-  bool isLoading = false;
+  bool isLoading = true;
   bool installStarted = false;
 
   final String shopDomain = 'dropflow-dev.myshopify.com';
 
-  // ✅ Updated with your actual custom app install link
   final Uri shopifyInstallUrl = Uri.parse(
     'https://admin.shopify.com/oauth/install_custom_app'
     '?client_id=17666a62ec6f6b831c533c069bc37f13'
@@ -31,9 +30,11 @@ class _DropFlowStartupGateState extends State<DropFlowStartupGate> {
   }
 
   Future<void> checkIfAlreadyInstalled() async {
-    setState(() => isLoading = true);
     final installed = await isShopInstalled();
-    setState(() => isLoading = false);
+    final spocket = await isSpocketConnected();
+    if (mounted) {
+      setState(() => isLoading = false);
+    }
 
     if (installed && mounted) {
       Navigator.pushReplacement(
@@ -41,7 +42,7 @@ class _DropFlowStartupGateState extends State<DropFlowStartupGate> {
         MaterialPageRoute(
           builder: (_) => DropFlowWelcomeScreen(
             shopOwner: shopDomain,
-            spocketDetected: false,
+            spocketDetected: spocket,
           ),
         ),
       );
@@ -65,41 +66,54 @@ class _DropFlowStartupGateState extends State<DropFlowStartupGate> {
 
     for (int i = 0; i < 15; i++) {
       final installed = await isShopInstalled();
-      if (installed) {
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => DropFlowWelcomeScreen(
-                shopOwner: shopDomain,
-                spocketDetected: false,
-              ),
+      final spocket = await isSpocketConnected();
+      if (installed && mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => DropFlowWelcomeScreen(
+              shopOwner: shopDomain,
+              spocketDetected: spocket,
             ),
-          );
-        }
+          ),
+        );
         return;
       }
       await Future.delayed(const Duration(seconds: 3));
     }
 
-    setState(() => isLoading = false);
+    if (mounted) {
+      setState(() => isLoading = false);
+    }
   }
 
   Future<bool> isShopInstalled() async {
     final supabase = Supabase.instance.client;
-
     final response = await supabase
         .from('shops')
         .select('id')
         .eq('shop_domain', shopDomain)
         .maybeSingle();
-
     return response != null;
+  }
+
+  Future<bool> isSpocketConnected() async {
+    final supabase = Supabase.instance.client;
+    final result = await supabase
+        .from('integrations')
+        .select('id')
+        .eq('shop_domain', shopDomain)
+        .eq('vendor', 'spocket')
+        .maybeSingle();
+    return result != null;
   }
 
   @override
   Widget build(BuildContext context) {
+    final surfaceColor = Theme.of(context).colorScheme.surface;
+
     return Scaffold(
+      backgroundColor: surfaceColor,
       body: Center(
         child: isLoading
             ? const CircularProgressIndicator()

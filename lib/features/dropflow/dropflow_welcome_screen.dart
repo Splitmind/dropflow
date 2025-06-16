@@ -66,12 +66,10 @@ class _DropFlowWelcomeScreenState extends State<DropFlowWelcomeScreen>
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
-
                 const ListTile(
                   leading: Icon(Icons.check_circle, color: Colors.green),
                   title: Text('Shopify Connected'),
                 ),
-
                 ListTile(
                   leading: Icon(
                     widget.spocketDetected
@@ -87,7 +85,6 @@ class _DropFlowWelcomeScreenState extends State<DropFlowWelcomeScreen>
                         : 'Spocket Not Detected',
                   ),
                 ),
-
                 const SizedBox(height: 12),
                 const Text(
                   'Loading your dashboard...',
