@@ -30,22 +30,32 @@ class _DropFlowStartupGateState extends State<DropFlowStartupGate> {
   }
 
   Future<void> checkIfAlreadyInstalled() async {
-    final installed = await isShopInstalled();
-    final spocket = await isSpocketConnected();
-    if (mounted) {
-      setState(() => isLoading = false);
-    }
-
-    if (installed && mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => DropFlowWelcomeScreen(
-            shopOwner: shopDomain,
-            spocketDetected: spocket,
-          ),
-        ),
+    try {
+      print('🔍 Checking Supabase install...');
+      final installed = await isShopInstalled().timeout(
+        const Duration(seconds: 8),
       );
+      final spocket = await isSpocketConnected().timeout(
+        const Duration(seconds: 8),
+      );
+
+      if (!mounted) return;
+      setState(() => isLoading = false);
+
+      if (installed) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => DropFlowWelcomeScreen(
+              shopOwner: shopDomain,
+              spocketDetected: spocket,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      print('❌ Supabase init check failed: $e');
+      if (mounted) setState(() => isLoading = false);
     }
   }
 
@@ -67,7 +77,10 @@ class _DropFlowStartupGateState extends State<DropFlowStartupGate> {
     for (int i = 0; i < 15; i++) {
       final installed = await isShopInstalled();
       final spocket = await isSpocketConnected();
-      if (installed && mounted) {
+
+      if (!mounted) return;
+
+      if (installed) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -79,12 +92,11 @@ class _DropFlowStartupGateState extends State<DropFlowStartupGate> {
         );
         return;
       }
+
       await Future.delayed(const Duration(seconds: 3));
     }
 
-    if (mounted) {
-      setState(() => isLoading = false);
-    }
+    if (mounted) setState(() => isLoading = false);
   }
 
   Future<bool> isShopInstalled() async {
