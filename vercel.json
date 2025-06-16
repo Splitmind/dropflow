@@ -1,0 +1,3 @@
+git add vercel.json
+git commit -m "Add Vercel rewrite config for Flutter web"
+git push
